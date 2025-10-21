@@ -42,8 +42,7 @@ function Chatbot() {
       const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: {
-          Authorization:
-            "Bearer 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",
+          Authorization: `Bearer ${import.meta.env.VITE_CHATBOT_API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -58,6 +57,7 @@ function Chatbot() {
           ],
         }),
       });
+      console.log("API KEY:", import.meta.env.VITE_CHATBOT_API_KEY);
 
       const data = await res.json();
       const botReply =
