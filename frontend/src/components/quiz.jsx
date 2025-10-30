@@ -1,189 +1,132 @@
-// ✅ src/components/QuizModal.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import {
-  phishingQuizTopics,
-  phishingAttackCategories,
-} from "../data/phishingQuizData";
 
-export default function QuizModal({ onClose }) {
-  const [activeTopic, setActiveTopic] = useState(null);
-  const [answers, setAnswers] = useState({});
-  const [scores, setScores] = useState({});
-  const [page, setPage] = useState(1); // Page 1 = What is Phishing, Page 2 = Phishing Attacks
+export default function QuizModal({ topic, onClose, onSubmit }) {
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const [score, setScore] = useState(0);
+  const [quizCompleted, setQuizCompleted] = useState(false);
 
-  // Combine quiz sets based on page
-  const topicList =
-    page === 1
-      ? phishingQuizTopics.map((t) => ({
-          ...t,
-          total: t.questions.length,
-        }))
-      : phishingAttackCategories.flatMap((cat) =>
-          cat.subtopics.map((s) => ({
-            title: `${cat.title} — ${s.name}`,
-            questions: s.questions,
-            total: s.questions.length,
-          }))
-        );
+  useEffect(() => {
+    // Reset quiz state when a new topic is passed
+    setCurrentQuestionIndex(0);
+    setSelectedAnswer(null);
+    setScore(0);
+    setQuizCompleted(false);
+  }, [topic]);
 
-  // Choose or toggle answer
-  function toggleAnswer(qIdx, choice) {
-    setAnswers((a) => ({ ...a, [qIdx]: choice }));
+  if (!topic || !topic.questions || topic.questions.length === 0) {
+    return createPortal(
+      <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+        <div className="relative bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md p-6 text-white">
+          <h2 className="text-xl font-semibold mb-4">No Quiz Available</h2>
+          <p>There are no questions for this topic yet.</p>
+          <button
+            onClick={onClose}
+            className="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white"
+          >
+            Close
+          </button>
+        </div>
+      </div>,
+      document.body
+    );
   }
 
-  // Submit current topic quiz
-  function handleSubmit() {
-    let score = 0;
-    activeTopic.questions.forEach((q, i) => {
-      if (answers[i] === q.correctAnswer) score++;
-    });
+  const currentQuestion = topic.questions[currentQuestionIndex];
 
-    setScores((s) => ({
-      ...s,
-      [activeTopic.title]: { score, total: activeTopic.questions.length },
-    }));
+  const handleAnswerSelect = (index) => {
+    setSelectedAnswer(index);
+  };
 
-    setActiveTopic(null);
-    setAnswers({});
-  }
+  const handleNextQuestion = () => {
+    if (selectedAnswer === currentQuestion.correctAnswer) {
+      setScore(score + 1);
+    }
+    setSelectedAnswer(null);
 
-  // Page switch
-  function switchPage() {
-    setPage((p) => (p === 1 ? 2 : 1));
-    setActiveTopic(null);
-  }
+    if (currentQuestionIndex < topic.questions.length - 1) {
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+    } else {
+      setQuizCompleted(true);
+    }
+  };
+
+  const handleSubmitQuiz = () => {
+    // Final score calculation if the last question was answered
+    if (selectedAnswer === currentQuestion.correctAnswer) {
+      setScore(score + 1);
+    }
+    onSubmit(score, topic.questions.length);
+    onClose();
+  };
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
 
-      <div className="relative bg-slate-900 rounded-2xl shadow-2xl w-full max-w-5xl p-6 text-white overflow-hidden">
-        {!activeTopic ? (
-          <>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold">
-                {page === 1
-                  ? "Quizzes — What is Phishing"
-                  : "Quizzes — Phishing Attacks"}
-              </h2>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={switchPage}
-                  className="px-3 py-1 text-sm bg-slate-700 hover:bg-slate-600 rounded-md"
-                >
-                  {page === 1 ? "Next Page →" : "← Previous Page"}
-                </button>
-                <button
-                  onClick={onClose}
-                  className="text-slate-400 hover:text-white text-xl leading-none"
-                >
-                  ✕
-                </button>
+      <div className="relative bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl p-6 text-white overflow-hidden">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold">Quiz: {topic.title}</h2>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-white text-xl leading-none"
+          >
+            ✕
+          </button>
+        </div>
+
+        {!quizCompleted ? (
+          <div className="space-y-4">
+            <div className="bg-slate-800/40 p-4 rounded-lg">
+              <div className="font-medium mb-2">
+                {currentQuestionIndex + 1}. {currentQuestion.question}
               </div>
-            </div>
-
-            <p className="text-slate-400 mb-4 text-sm">
-              Choose a topic below to start the quiz.
-            </p>
-
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[65vh] overflow-auto pr-2">
-              {topicList.map((topic, i) => {
-                const status = scores[topic.title];
-                const attempted = !!status;
-                const scoreText = attempted
-                  ? `Score: ${status.score}/${status.total}`
-                  : "Not attempted";
-
-                return (
-                  <div
-                    key={i}
-                    className="bg-slate-800/60 rounded-xl p-4 flex flex-col justify-between"
+              <div className="grid gap-2">
+                {currentQuestion.options.map((option, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleAnswerSelect(index)}
+                    className={`text-left px-3 py-2 rounded-md border transition ${
+                      selectedAnswer === index
+                        ? "border-emerald-500 bg-emerald-800/30"
+                        : "border-slate-700 hover:border-slate-500"
+                    }`}
                   >
-                    <div>
-                      <h3 className="font-semibold text-lg mb-1">
-                        {topic.title}
-                      </h3>
-                      <p className="text-slate-400 text-sm">
-                        Questions: {topic.total}
-                      </p>
-                      <p
-                        className={`text-sm mt-1 ${
-                          attempted
-                            ? "text-emerald-400"
-                            : "text-slate-500 italic"
-                        }`}
-                      >
-                        {scoreText}
-                      </p>
-                    </div>
-
-                    <button
-                      onClick={() => setActiveTopic(topic)}
-                      className="mt-3 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 rounded-md text-sm font-medium"
-                    >
-                      {attempted ? "Retake" : "Attempt"}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        ) : (
-          <>
-            {/* QUIZ VIEW */}
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">
-                Quiz: {activeTopic.title}
-              </h2>
-              <button
-                onClick={() => setActiveTopic(null)}
-                className="text-slate-400 hover:text-white"
-              >
-                ← Back
-              </button>
-            </div>
-
-            <div className="space-y-4 max-h-[60vh] overflow-auto pr-2">
-              {activeTopic.questions.map((q, i) => (
-                <div key={i} className="bg-slate-800/40 p-4 rounded-lg">
-                  <div className="font-medium mb-2">
-                    {i + 1}. {q.question}
-                  </div>
-                  <div className="grid gap-2">
-                    {q.options.map((c, j) => (
-                      <button
-                        key={j}
-                        onClick={() => toggleAnswer(i, j)}
-                        className={`text-left px-3 py-2 rounded-md border transition ${
-                          answers[i] === j
-                            ? "border-emerald-500 bg-emerald-800/30"
-                            : "border-slate-700 hover:border-slate-500"
-                        }`}
-                      >
-                        {c}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
+                    {option}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="mt-4 flex items-center justify-end gap-3">
               <button
-                onClick={() => setActiveTopic(null)}
+                onClick={onClose}
                 className="px-4 py-2 rounded-lg border border-slate-700"
               >
                 Cancel
               </button>
               <button
-                onClick={handleSubmit}
-                className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white"
+                onClick={handleNextQuestion}
+                disabled={selectedAnswer === null}
+                className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-50"
               >
-                Submit
+                {currentQuestionIndex < topic.questions.length - 1 ? "Next Question" : "Finish Quiz"}
               </button>
             </div>
-          </>
+          </div>
+        ) : (
+          <div className="text-center">
+            <h3 className="text-2xl font-bold mb-4">Quiz Completed!</h3>
+            <p className="text-xl">Your score: {score} out of {topic.questions.length}</p>
+            <button
+              onClick={handleSubmitQuiz}
+              className="mt-6 px-6 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-white text-lg"
+            >
+              Submit Score
+            </button>
+          </div>
         )}
       </div>
     </div>,

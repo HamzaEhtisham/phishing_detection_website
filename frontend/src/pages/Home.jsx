@@ -88,7 +88,7 @@ export default function PhishingHome() {
 
             <div className="mt-6 flex items-center justify-between">
               <Link
-                to="/phishing-simulator"
+                to="/topics"
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 transition font-medium"
               >
                 Open Simulator

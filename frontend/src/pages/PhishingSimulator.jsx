@@ -1,5 +1,5 @@
-// This is a test comment to force re-compilation
 import React, { useEffect, useRef, useState } from "react";
+import { useParams } from "react-router-dom";
 import {
   MessageSquare,
   ChevronLeft,
@@ -10,8 +10,11 @@ import {
   Menu,
 } from "lucide-react";
 import QuizModal from "../components/quiz";
+import { topicsData } from "../data/topicsData";
+import { phishingQuizTopics, phishingAttackCategories } from "../data/phishingQuizdata";
 
-// Updated Chatbot (AI-powered)
+// ... (Chatbot component remains the same)
+
 function Chatbot() {
   const [messages, setMessages] = useState([
     {
@@ -158,75 +161,75 @@ function Chatbot() {
 }
 
 export default function PhishingSimulator() {
+  const { topicId, subTopicId } = useParams();
+  const [currentTopic, setCurrentTopic] = useState(null);
+  const [slides, setSlides] = useState([]);
+  const [quizTopics, setQuizTopics] = useState([]);
+
+  useEffect(() => {
+    let topic;
+    let quizData;
+
+    if (subTopicId) {
+      const mainTopic = topicsData.find((t) => t.id === parseInt(topicId));
+      topic = mainTopic?.subtopics.find((st) => st.id === subTopicId);
+      
+      // Find the category in phishingAttackCategories using the main topic's title
+      const category = phishingAttackCategories.find(c => c.title === mainTopic.title);
+      // Find the specific subtopic quiz data using the subtopic's title
+      quizData = category?.subtopics.find(st => st.name === topic.title);
+
+    } else {
+      topic = topicsData.find((t) => t.id === parseInt(topicId));
+      quizData = phishingQuizTopics.find(qt => qt.id === `topic_${topicId}`);
+    }
+
+    if (topic) {
+      setCurrentTopic(topic);
+      const generatedSlides = [
+        {
+          id: 1,
+          title: `Intro to ${topic.title}`,
+          content: `This section covers the basics of ${topic.title}.`,
+        },
+        {
+          id: 2,
+          title: `Key Indicators of ${topic.title}`,
+          content: `Learn to identify the red flags associated with ${topic.title}.`,
+        },
+      ];
+      setSlides(generatedSlides);
+
+      if (quizData) {
+        setQuizTopics([{
+          id: quizData.id || topic.id,
+          title: quizData.title || topic.title,
+          questions: quizData.questions,
+          attempted: false,
+          score: null,
+        }]);
+      } else {
+        setQuizTopics([]);
+      }
+
+    }
+  }, [topicId, subTopicId]);
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     window.location.href = "/login";
   };
 
-  const slides = [
-    {
-      id: 1,
-      title: "Intro to Phishing",
-      content: "What is phishing, common goals and vectors.",
-    },
-    {
-      id: 2,
-      title: "Email Indicators",
-      content:
-        "Suspicious sender, strange links, grammar/typos, urgent language.",
-    },
-    {
-      id: 3,
-      title: "URL Analysis",
-      content: "Lookalike domains, punycode, path-based tricks.",
-    },
-    {
-      id: 4,
-      title: "Attachment Risks",
-      content: "Malicious attachments, macros, sandboxing tips.",
-    },
-    {
-      id: 5,
-      title: "Social Engineering",
-      content: "Pretexting, baiting, and context-aware attacks.",
-    },
-  ];
-
-  const initialTopics = slides.map((s) => ({
-    id: s.id,
-    title: s.title,
-    questions: [
-      {
-        question: `What is one key point from "${s.title}"?`,
-        choices: ["Option A", "Option B", "Option C", "Option D"],
-        correct: 1,
-      },
-      {
-        question: `How can you apply knowledge from "${s.title}"?`,
-        choices: [
-          "Ignore emails",
-          "Verify URLs",
-          "Click everything",
-          "Reply fast",
-        ],
-        correct: 1,
-      },
-    ],
-    attempted: false,
-    score: null,
-  }));
-
   const [index, setIndex] = useState(0);
   const [autoplay, setAutoplay] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const autoplayRef = useRef(null);
-  const [topics, setTopics] = useState(initialTopics);
   const [activeQuizTopic, setActiveQuizTopic] = useState(null);
   const [result, setResult] = useState(null);
 
   useEffect(() => {
-    if (autoplay) {
+    if (autoplay && slides.length > 0) {
       autoplayRef.current = setInterval(() => {
         setIndex((i) => (i + 1) % slides.length);
       }, 4500);
@@ -244,12 +247,12 @@ export default function PhishingSimulator() {
   }
 
   function openQuiz(topicId) {
-    const t = topics.find((tt) => tt.id === topicId);
+    const t = quizTopics.find((tt) => tt.id === topicId);
     setActiveQuizTopic(t);
   }
 
   function handleQuizSubmit(score, outOf) {
-    setTopics((prev) =>
+    setQuizTopics((prev) =>
       prev.map((t) =>
         t.id === activeQuizTopic.id
           ? { ...t, attempted: true, score: `${score}/${outOf}` }
@@ -258,6 +261,10 @@ export default function PhishingSimulator() {
     );
     setResult({ topic: activeQuizTopic.title, score: `${score}/${outOf}` });
     setActiveQuizTopic(null);
+  }
+
+  if (!currentTopic) {
+    return <div>Loading...</div>;
   }
 
   return (
@@ -273,7 +280,7 @@ export default function PhishingSimulator() {
           <div className="bg-slate-800/40 rounded-2xl p-6 shadow-lg flex flex-col">
             <div className="flex items-center justify-between mb-4">
               <h1 className="text-2xl font-bold">
-                Phishing Simulator — Slides
+                {currentTopic.title}
               </h1>
               <div className="flex items-center gap-2">
                 <button
@@ -295,9 +302,9 @@ export default function PhishingSimulator() {
               <div className="flex-1 bg-gradient-to-br from-slate-700/20 to-slate-700/10 rounded-lg p-6 flex flex-col justify-between">
                 <div>
                   <h2 className="text-xl font-semibold">
-                    {slides[index].title}
+                    {slides[index]?.title}
                   </h2>
-                  <p className="mt-3 text-slate-300">{slides[index].content}</p>
+                  <p className="mt-3 text-slate-300">{slides[index]?.content}</p>
 
                   <ul className="mt-4 list-disc pl-5 text-slate-400 space-y-2">
                     <li>Example point A about this topic.</li>
@@ -324,7 +331,7 @@ export default function PhishingSimulator() {
 
                   <div>
                     <button
-                      onClick={() => openQuiz(slides[index].id)}
+                      onClick={() => openQuiz(quizTopics[0]?.id)}
                       className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500"
                     >
                       Take Quiz (this topic)
@@ -351,43 +358,43 @@ export default function PhishingSimulator() {
           {/* Quizzes */}
           <div className="bg-slate-800/30 rounded-2xl p-4 shadow-inner">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-lg font-semibold">Quizzes — Topics</h3>
+              <h3 className="text-lg font-semibold">Quiz</h3>
               <div className="text-sm text-slate-400">
-                Attempt quizzes after each topic
+                Attempt the quiz for this topic
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {topics.map((t) => (
-                <div
-                  key={t.id}
-                  className="bg-slate-900/40 rounded-lg p-3 flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="font-medium">{t.title}</div>
-                    <div className="text-sm text-slate-400 mt-1">
-                      Questions: {t.questions.length}
-                    </div>
-                    <div className="text-sm text-emerald-400 mt-2">
-                      {t.attempted ? `Score: ${t.score}` : "Not attempted"}
-                    </div>
+            {quizTopics.length > 0 ? (
+              <div
+                key={quizTopics[0].id}
+                className="bg-slate-900/40 rounded-lg p-3 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="font-medium">{quizTopics[0].title}</div>
+                  <div className="text-sm text-slate-400 mt-1">
+                    Questions: {quizTopics[0].questions.length}
                   </div>
-                  <div className="mt-3 flex items-center justify-between">
-                    <button
-                      onClick={() => openQuiz(t.id)}
-                      className="px-3 py-1 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white"
-                    >
-                      Attempt
-                    </button>
-                    {t.attempted && (
-                      <span className="text-sm text-slate-400">
-                        Attempted ✓
-                      </span>
-                    )}
+                  <div className="text-sm text-emerald-400 mt-2">
+                    {quizTopics[0].attempted ? `Score: ${quizTopics[0].score}` : "Not attempted"}
                   </div>
                 </div>
-              ))}
-            </div>
+                <div className="mt-3 flex items-center justify-between">
+                  <button
+                    onClick={() => openQuiz(quizTopics[0].id)}
+                    className="px-3 py-1 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white"
+                  >
+                    Attempt
+                  </button>
+                  {quizTopics[0].attempted && (
+                    <span className="text-sm text-slate-400">
+                      Attempted ✓
+                    </span>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="text-slate-400">No quiz available for this topic.</div>
+            )}
 
             {result && (
               <div className="mt-4 text-sm text-emerald-300">

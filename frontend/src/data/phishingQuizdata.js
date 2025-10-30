@@ -231,7 +231,7 @@ export const phishingQuizTopics = [
 export const phishingAttackCategories = [
   {
     id: "email_message",
-    title: "Email / Message-Based Attacks",
+    title: "Email / message-based",
     subtopics: [
       {
         name: "Generic Email Phishing",
@@ -249,7 +249,7 @@ export const phishingAttackCategories = [
         ],
       },
       {
-        name: "Spear-Phishing",
+        name: "Spear-phishing",
         questions: [
           {
             question: "Spear-phishing uses:",
@@ -264,7 +264,7 @@ export const phishingAttackCategories = [
         ],
       },
       {
-        name: "Whaling",
+        name: "Whaling / Executive Targeting",
         questions: [
           {
             question: "Whaling attacks focus on:",
@@ -278,14 +278,119 @@ export const phishingAttackCategories = [
           },
         ],
       },
+      {
+        name: "Business Email Compromise (BEC) / CEO Fraud",
+        questions: [
+          {
+            question: "BEC attacks involve:",
+            options: [
+              "Impersonating executives for fraudulent transfers",
+              "Sending mass spam emails",
+              "Website defacement",
+              "Software updates",
+            ],
+            correctAnswer: 0,
+          },
+        ],
+      },
+      {
+        name: "Clone Phishing",
+        questions: [
+          {
+            question: "Clone phishing reuses:",
+            options: [
+              "Legitimate email threads with swapped links/attachments",
+              "New email templates",
+              "Public social media posts",
+              "Antivirus alerts",
+            ],
+            correctAnswer: 0,
+          },
+        ],
+      },
+      {
+        name: "Invoice / Payment Diversion Scams",
+        questions: [
+          {
+            question: "Invoice scams aim to:",
+            options: [
+              "Change payment instructions to attacker's account",
+              "Offer discounts on products",
+              "Confirm order deliveries",
+              "Request product reviews",
+            ],
+            correctAnswer: 0,
+          },
+        ],
+      },
+      {
+        name: "Attachment-based Phishing (Macro Malware)",
+        questions: [
+          {
+            question: "Macro malware is often found in:",
+            options: [
+              "Malicious documents requiring macros to be enabled",
+              "Plain text emails",
+              "Image files",
+              "PDFs without active content",
+            ],
+            correctAnswer: 0,
+          },
+        ],
+      },
+      {
+        name: "Credential-Harvesting Pages (Fake Login Pages)",
+        questions: [
+          {
+            question: "Fake login pages are designed to:",
+            options: [
+              "Steal user credentials",
+              "Provide legitimate access",
+              "Offer software downloads",
+              "Display advertisements",
+            ],
+            correctAnswer: 0,
+          },
+        ],
+      },
+      {
+        name: "OAuth Consent Phishing",
+        questions: [
+          {
+            question: "OAuth phishing tricks users into:",
+            options: [
+              "Granting malicious apps access to their accounts",
+              "Updating their operating system",
+              "Changing their email password securely",
+              "Installing antivirus software",
+            ],
+            correctAnswer: 0,
+          },
+        ],
+      },
+      {
+        name: "Reply-Chain / Thread Hijacking",
+        questions: [
+          {
+            question: "Thread hijacking involves:",
+            options: [
+              "Inserting attacker into existing email conversations",
+              "Starting new email chains",
+              "Deleting old emails",
+              "Archiving messages",
+            ],
+            correctAnswer: 0,
+          },
+        ],
+      },
     ],
   },
   {
     id: "web_url",
-    title: "Web / URL / Domain-Based Attacks",
+    title: "Web / URL / domain-based",
     subtopics: [
       {
-        name: "Typosquatting",
+        name: "Typosquatting / Domain Squatting",
         questions: [
           {
             question: "Typosquatting involves:",
@@ -294,6 +399,66 @@ export const phishingAttackCategories = [
               "Sending fake SMS messages",
               "Voice phishing calls",
               "Hardware keyloggers",
+            ],
+            correctAnswer: 0,
+          },
+        ],
+      },
+      {
+        name: "Homograph / IDN Spoofing",
+        questions: [
+          {
+            question: "Homograph attacks use:",
+            options: [
+              "Similar Unicode characters to mimic domains",
+              "Exact domain replicas",
+              "IP addresses directly",
+              "Encrypted connections",
+            ],
+            correctAnswer: 0,
+          },
+        ],
+      },
+      {
+        name: "Pharming / DNS Hijack",
+        questions: [
+          {
+            question: "Pharming redirects users to malicious sites by:",
+            options: [
+              "Manipulating DNS settings",
+              "Sending phishing emails",
+              "Using fake Wi-Fi hotspots",
+              "Physical access to devices",
+            ],
+            correctAnswer: 0,
+          },
+        ],
+      },
+      {
+        name: "Drive-by Download / Malvertising",
+        questions: [
+          {
+            question: "Malvertising delivers malware through:",
+            options: [
+              "Malicious online advertisements",
+              "Direct email attachments",
+              "SMS messages",
+              "Phone calls",
+            ],
+            correctAnswer: 0,
+          },
+        ],
+      },
+      {
+        name: "SEO Poisoning",
+        questions: [
+          {
+            question: "SEO poisoning involves:",
+            options: [
+              "Ranking malicious sites high in search results",
+              "Sending unsolicited emails",
+              "Creating fake social media profiles",
+              "Using voice calls to deceive",
             ],
             correctAnswer: 0,
           },
@@ -321,7 +486,7 @@ export const phishingAttackCategories = [
     title: "Telephony & SMS",
     subtopics: [
       {
-        name: "Vishing",
+        name: "Vishing (Voice Phishing)",
         questions: [
           {
             question: "Vishing attacks are carried out via:",
@@ -336,7 +501,7 @@ export const phishingAttackCategories = [
         ],
       },
       {
-        name: "Smishing",
+        name: "Smishing (SMS Phishing)",
         questions: [
           {
             question: "Smishing uses which medium?",
@@ -345,22 +510,67 @@ export const phishingAttackCategories = [
           },
         ],
       },
+      {
+        name: "Callback / Missed-call Scams",
+        questions: [
+          {
+            question: "Callback scams lure victims to:",
+            options: [
+              "Call back a premium or attacker number",
+              "Visit a legitimate website",
+              "Download a safe application",
+              "Reply to an email",
+            ],
+            correctAnswer: 0,
+          },
+        ],
+      },
     ],
   },
   {
     id: "social_platforms",
-    title: "Social Platforms & Apps",
+    title: "Social platforms & apps",
     subtopics: [
       {
-        name: "Fake Profiles",
+        name: "Social Media Phishing / Profile Reconnaissance",
         questions: [
           {
-            question: "Fake social media profiles are used to:",
+            question: "Social media phishing uses:",
             options: [
-              "Trick users into revealing information or clicking links",
-              "Manage real company pages",
-              "Block phishing sites",
-              "Test social media features",
+              "Messages or fake profiles to trick users",
+              "Official company announcements",
+              "Secure login portals",
+              "Encrypted chat applications",
+            ],
+            correctAnswer: 0,
+          },
+        ],
+      },
+      {
+        name: "Angler Phishing (Customer-service Impersonation)",
+        questions: [
+          {
+            question: "Angler phishing involves:",
+            options: [
+              "Fake social replies posing as customer support",
+              "Official customer service calls",
+              "Automated email responses",
+              "In-person support",
+            ],
+            correctAnswer: 0,
+          },
+        ],
+      },
+      {
+        name: "Fake Apps / App Store Phishing",
+        questions: [
+          {
+            question: "Fake apps trick users into:",
+            options: [
+              "Downloading malicious or look-alike mobile applications",
+              "Updating legitimate apps",
+              "Using secure app stores",
+              "Verifying app permissions",
             ],
             correctAnswer: 0,
           },
@@ -370,10 +580,10 @@ export const phishingAttackCategories = [
   },
   {
     id: "network_infra",
-    title: "Network & Infrastructure Attacks",
+    title: "Network & infrastructure",
     subtopics: [
       {
-        name: "Evil Twin Wi-Fi",
+        name: "Evil-Twin Wi-Fi / Rogue AP",
         questions: [
           {
             question: "An Evil Twin Wi-Fi is:",
@@ -387,14 +597,44 @@ export const phishingAttackCategories = [
           },
         ],
       },
+      {
+        name: "Man-in-the-Middle (MitM) Phishing",
+        questions: [
+          {
+            question: "MitM attacks involve:",
+            options: [
+              "Intercepting traffic to capture credentials",
+              "Direct connection to servers",
+              "Using secure protocols",
+              "Offline data storage",
+            ],
+            correctAnswer: 0,
+          },
+        ],
+      },
+      {
+        name: "Session Hijacking / Cookie Theft",
+        questions: [
+          {
+            question: "Session hijacking steals:",
+            options: [
+              "Active user sessions or cookies",
+              "Encrypted network packets",
+              "Hardware identifiers",
+              "Software licenses",
+            ],
+            correctAnswer: 0,
+          },
+        ],
+      },
     ],
   },
   {
     id: "advanced_media",
-    title: "Advanced / Multimedia / Social Engineering",
+    title: "Advanced / multimedia / social engineering",
     subtopics: [
       {
-        name: "Deepfake Impersonation",
+        name: "Deepfake / Synthetic Media Impersonation",
         questions: [
           {
             question: "Deepfake phishing may use:",
@@ -408,14 +648,74 @@ export const phishingAttackCategories = [
           },
         ],
       },
+      {
+        name: "Pretexting / In-person Social Engineering",
+        questions: [
+          {
+            question: "Pretexting relies on:",
+            options: [
+              "Creating a believable fabricated scenario to gain information",
+              "Technical vulnerabilities",
+              "Automated scripts",
+              "Random guessing",
+            ],
+            correctAnswer: 0,
+          },
+        ],
+      },
+      {
+        name: "Watering-hole Attacks",
+        questions: [
+          {
+            question: "Watering-hole attacks compromise:",
+            options: [
+              "Websites frequently visited by a target group",
+              "Individual email accounts",
+              "Home Wi-Fi networks",
+              "Public cloud storage",
+            ],
+            correctAnswer: 0,
+          },
+        ],
+      },
+      {
+        name: "Supply-chain / Vendor Compromise",
+        questions: [
+          {
+            question: "Supply-chain attacks leverage:",
+            options: [
+              "Compromised vendor channels to distribute malware or phish",
+              "Direct attacks on end-users",
+              "Physical theft of devices",
+              "Brute-force password attacks",
+            ],
+            correctAnswer: 0,
+          },
+        ],
+      },
+      {
+        name: "Clipboard Hijacking",
+        questions: [
+          {
+            question: "Clipboard hijacking malware replaces:",
+            options: [
+              "Copied cryptocurrency wallet addresses",
+              "Text in documents",
+              "Browser history",
+              "System settings",
+            ],
+            correctAnswer: 0,
+          },
+        ],
+      },
     ],
   },
   {
     id: "physical_offline",
-    title: "Physical / Offline Vectors",
+    title: "Physical / offline vectors",
     subtopics: [
       {
-        name: "USB Drop",
+        name: "USB Drop / Rogue USBs",
         questions: [
           {
             question: "USB Drop attacks rely on:",
@@ -429,14 +729,44 @@ export const phishingAttackCategories = [
           },
         ],
       },
+      {
+        name: "Mail / Physical Letter Phishing",
+        questions: [
+          {
+            question: "Physical letter phishing uses:",
+            options: [
+              "Printed letters with malicious links or QR codes",
+              "Email attachments",
+              "SMS messages",
+              "Voice calls",
+            ],
+            correctAnswer: 0,
+          },
+        ],
+      },
+      {
+        name: "On-site Social Engineering",
+        questions: [
+          {
+            question: "On-site social engineering involves:",
+            options: [
+              "Impersonating staff to gain physical access",
+              "Remote network access",
+              "Email-based deception",
+              "Automated system attacks",
+            ],
+            correctAnswer: 0,
+          },
+        ],
+      },
     ],
   },
   {
     id: "other_variants",
-    title: "Other Noteworthy Variants",
+    title: "Other noteworthy variants",
     subtopics: [
       {
-        name: "Malicious Chatbots",
+        name: "Malicious Chatbots / Automated Scams",
         questions: [
           {
             question: "Malicious chatbots are used to:",
@@ -445,6 +775,36 @@ export const phishingAttackCategories = [
               "Improve customer support",
               "Scan QR codes safely",
               "Encrypt user data",
+            ],
+            correctAnswer: 0,
+          },
+        ],
+      },
+      {
+        name: "Pop-up / Browser Alert Phishing",
+        questions: [
+          {
+            question: "Pop-up phishing uses:",
+            options: [
+              "Fake browser alerts warning of infections to get users to call or click",
+              "Legitimate system notifications",
+              "Secure website certificates",
+              "Antivirus software updates",
+            ],
+            correctAnswer: 0,
+          },
+        ],
+      },
+      {
+        name: "Credential Stuffing (related risk)",
+        questions: [
+          {
+            question: "Credential stuffing is:",
+            options: [
+              "Using stolen credentials from one breach to try logging into other services",
+              "A method to securely store passwords",
+              "A type of multi-factor authentication",
+              "A way to generate strong, unique passwords",
             ],
             correctAnswer: 0,
           },

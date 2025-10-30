@@ -8,6 +8,8 @@ import UserPanelPage from "./pages/UserPanelPage"; // Changed import
 import AdminPanel from "./components/adminpanel";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
+import Topics from "./pages/Topics";
+import SubTopics from "./pages/SubTopics";
 
 function App() {
   return (
@@ -17,7 +19,9 @@ function App() {
 
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<Home />} />
-        <Route path="/phishing-simulator" element={<PhishingSimulator />} />
+        <Route path="/topics" element={<Topics />} />
+        <Route path="/topics/:topicId" element={<SubTopics />} />
+        <Route path="/simulator/:topicId/:subTopicId?" element={<PhishingSimulator />} />
         <Route path="/user-panel" element={<UserPanelPage />} /> {/* Changed component */}
       </Route>
 
