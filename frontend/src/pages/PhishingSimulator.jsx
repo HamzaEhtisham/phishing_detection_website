@@ -2,16 +2,17 @@ import React, { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
   MessageSquare,
-  ChevronLeft,
-  ChevronRight,
-  Play,
-  Pause,
   X,
   Menu,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import QuizModal from "../components/quiz";
 import { topicsData } from "../data/topicsData";
 import { phishingQuizTopics, phishingAttackCategories } from "../data/phishingQuizdata";
+import * as pdfjsLib from 'pdfjs-dist';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = '/workers/pdf.worker.min.mjs';
 
 // ... (Chatbot component remains the same)
 
@@ -163,8 +164,10 @@ function Chatbot() {
 export default function PhishingSimulator() {
   const { topicId, subTopicId } = useParams();
   const [currentTopic, setCurrentTopic] = useState(null);
-  const [slides, setSlides] = useState([]);
   const [quizTopics, setQuizTopics] = useState([]);
+  const [pageImages, setPageImages] = useState([]);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [isLoadingPdf, setIsLoadingPdf] = useState(false);
 
   useEffect(() => {
     let topic;
@@ -174,9 +177,7 @@ export default function PhishingSimulator() {
       const mainTopic = topicsData.find((t) => t.id === parseInt(topicId));
       topic = mainTopic?.subtopics.find((st) => st.id === subTopicId);
       
-      // Find the category in phishingAttackCategories using the main topic's title
       const category = phishingAttackCategories.find(c => c.title === mainTopic.title);
-      // Find the specific subtopic quiz data using the subtopic's title
       quizData = category?.subtopics.find(st => st.name === topic.title);
 
     } else {
@@ -186,20 +187,6 @@ export default function PhishingSimulator() {
 
     if (topic) {
       setCurrentTopic(topic);
-      const generatedSlides = [
-        {
-          id: 1,
-          title: `Intro to ${topic.title}`,
-          content: `This section covers the basics of ${topic.title}.`,
-        },
-        {
-          id: 2,
-          title: `Key Indicators of ${topic.title}`,
-          content: `Learn to identify the red flags associated with ${topic.title}.`,
-        },
-      ];
-      setSlides(generatedSlides);
-
       if (quizData) {
         setQuizTopics([{
           id: quizData.id || topic.id,
@@ -211,9 +198,31 @@ export default function PhishingSimulator() {
       } else {
         setQuizTopics([]);
       }
-
     }
   }, [topicId, subTopicId]);
+
+  useEffect(() => {
+    const renderPdfToImages = async () => {
+      if (currentTopic && currentTopic.slidePath) {
+        setIsLoadingPdf(true);
+        const pdf = await pdfjsLib.getDocument(currentTopic.slidePath).promise;
+        const images = [];
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const viewport = page.getViewport({ scale: 1.5 });
+          const canvas = document.createElement("canvas");
+          const context = canvas.getContext("2d");
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+          await page.render({ canvasContext: context, viewport: viewport }).promise;
+          images.push(canvas.toDataURL());
+        }
+        setPageImages(images);
+        setIsLoadingPdf(false);
+      }
+    };
+    renderPdfToImages();
+  }, [currentTopic]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -221,30 +230,9 @@ export default function PhishingSimulator() {
     window.location.href = "/login";
   };
 
-  const [index, setIndex] = useState(0);
-  const [autoplay, setAutoplay] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const autoplayRef = useRef(null);
   const [activeQuizTopic, setActiveQuizTopic] = useState(null);
   const [result, setResult] = useState(null);
-
-  useEffect(() => {
-    if (autoplay && slides.length > 0) {
-      autoplayRef.current = setInterval(() => {
-        setIndex((i) => (i + 1) % slides.length);
-      }, 4500);
-    } else {
-      clearInterval(autoplayRef.current);
-    }
-    return () => clearInterval(autoplayRef.current);
-  }, [autoplay, slides.length]);
-
-  function goPrev() {
-    setIndex((i) => (i - 1 + slides.length) % slides.length);
-  }
-  function goNext() {
-    setIndex((i) => (i + 1) % slides.length);
-  }
 
   function openQuiz(topicId) {
     const t = quizTopics.find((tt) => tt.id === topicId);
@@ -277,82 +265,39 @@ export default function PhishingSimulator() {
         {/* MAIN PANEL */}
         <div className="flex flex-col gap-4">
           {/* Slides */}
-          <div className="bg-slate-800/40 rounded-2xl p-6 shadow-lg flex flex-col">
+          <div className="bg-slate-800/40 rounded-2xl p-6 shadow-lg flex-col" style={{ display: 'flex', height: '100%' }}>
             <div className="flex items-center justify-between mb-4">
               <h1 className="text-2xl font-bold">
                 {currentTopic.title}
               </h1>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setAutoplay((a) => !a)}
-                  className="inline-flex items-center gap-2 px-3 py-1 rounded-md border border-slate-700"
-                >
-                  {autoplay ? <Pause size={14} /> : <Play size={14} />}
-                  <span className="text-sm">
-                    {autoplay ? "Pause" : "Autoplay"}
-                  </span>
-                </button>
-                <div className="px-3 py-1 text-sm text-slate-400">
-                  Slide {index + 1}/{slides.length}
-                </div>
-              </div>
             </div>
 
-            <div className="flex-1 flex flex-col md:flex-row gap-4">
-              <div className="flex-1 bg-gradient-to-br from-slate-700/20 to-slate-700/10 rounded-lg p-6 flex flex-col justify-between">
-                <div>
-                  <h2 className="text-xl font-semibold">
-                    {slides[index]?.title}
-                  </h2>
-                  <p className="mt-3 text-slate-300">{slides[index]?.content}</p>
-
-                  <ul className="mt-4 list-disc pl-5 text-slate-400 space-y-2">
-                    <li>Example point A about this topic.</li>
-                    <li>Example point B with more details.</li>
-                    <li>Tips & best practices for recognizing phishing.</li>
-                  </ul>
-                </div>
-
-                <div className="mt-4 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={goPrev}
-                      className="p-2 rounded-md border border-slate-700 hover:bg-slate-800"
-                    >
-                      <ChevronLeft size={18} />
-                    </button>
-                    <button
-                      onClick={goNext}
-                      className="p-2 rounded-md border border-slate-700 hover:bg-slate-800"
-                    >
-                      <ChevronRight size={18} />
-                    </button>
-                  </div>
-
-                  <div>
-                    <button
-                      onClick={() => openQuiz(quizTopics[0]?.id)}
-                      className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500"
-                    >
-                      Take Quiz (this topic)
-                    </button>
-                  </div>
-                </div>
+            {currentTopic.slidePath ? (
+              <div className="flex-1">
+                {isLoadingPdf ? (
+                  <div>Loading PDF...</div>
+                ) : (
+                  <>
+                    {pageImages.length > 0 && <img src={pageImages[pageNumber - 1]} alt={`Page ${pageNumber}`} />}
+                    <div className="flex justify-center items-center mt-4">
+                        <button onClick={() => setPageNumber(pageNumber - 1)} disabled={pageNumber <= 1} className="p-2 rounded-md border border-slate-700 hover:bg-slate-800 disabled:opacity-50">
+                            <ChevronLeft size={18} />
+                        </button>
+                        <p className="mx-4">
+                            Page {pageNumber} of {pageImages.length}
+                        </p>
+                        <button onClick={() => setPageNumber(pageNumber + 1)} disabled={pageNumber >= pageImages.length} className="p-2 rounded-md border border-slate-700 hover:bg-slate-800 disabled:opacity-50">
+                            <ChevronRight size={18} />
+                        </button>
+                    </div>
+                  </>
+                )}
               </div>
-
-              {/* Quick Notes */}
-              <div className="w-full md:w-56 bg-slate-800/30 rounded-lg p-4">
-                <h4 className="font-semibold">Quick Notes</h4>
-                <p className="mt-2 text-slate-300 text-sm">
-                  Helpful checklist for this slide:
-                </p>
-                <ul className="mt-3 text-slate-400 list-disc pl-5 text-sm space-y-1">
-                  <li>Check sender authenticity</li>
-                  <li>Hover links before clicking</li>
-                  <li>Be cautious of attachments</li>
-                </ul>
+            ) : (
+              <div className="flex-1 flex flex-col md:flex-row gap-4">
+                <p>No slides available for this topic.</p>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Quizzes */}

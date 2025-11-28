@@ -10,6 +10,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 import Topics from "./pages/Topics";
 import SubTopics from "./pages/SubTopics";
+import PhishingDetector from "./pages/PhishingDetector";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
         <Route path="/topics/:topicId" element={<SubTopics />} />
         <Route path="/simulator/:topicId/:subTopicId?" element={<PhishingSimulator />} />
         <Route path="/user-panel" element={<UserPanelPage />} /> {/* Changed component */}
+        <Route path="/detect" element={<PhishingDetector />} />
       </Route>
 
       <Route element={<AdminRoute />}>
