@@ -2,26 +2,26 @@ import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 
 export default function QuizModal({ topic, onClose, onSubmit }) {
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [currentPromptIndex, setCurrentPromptIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [score, setScore] = useState(0);
   const [quizCompleted, setQuizCompleted] = useState(false);
 
   useEffect(() => {
     // Reset quiz state when a new topic is passed
-    setCurrentQuestionIndex(0);
+    setCurrentPromptIndex(0);
     setSelectedAnswer(null);
     setScore(0);
     setQuizCompleted(false);
   }, [topic]);
 
-  if (!topic || !topic.questions || topic.questions.length === 0) {
+  if (!topic || !topic.prompts || topic.prompts.length === 0) {
     return createPortal(
       <div className="fixed inset-0 z-50 flex items-center justify-center">
         <div className="absolute inset-0 bg-black/60" onClick={onClose} />
         <div className="relative bg-slate-900 rounded-2xl shadow-2xl w-full max-w-md p-6 text-white">
           <h2 className="text-xl font-semibold mb-4">No Quiz Available</h2>
-          <p>There are no questions for this topic yet.</p>
+          <p>There are no prompts for this topic yet.</p>
           <button
             onClick={onClose}
             className="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-white"
@@ -34,20 +34,20 @@ export default function QuizModal({ topic, onClose, onSubmit }) {
     );
   }
 
-  const currentQuestion = topic.questions[currentQuestionIndex];
+  const currentPrompt = topic.prompts[currentPromptIndex];
 
   const handleAnswerSelect = (index) => {
     setSelectedAnswer(index);
   };
 
   const handleNextQuestion = () => {
-    if (selectedAnswer === currentQuestion.correctAnswer) {
+    if (selectedAnswer === currentPrompt.correctAnswer) {
       setScore(score + 1);
     }
     setSelectedAnswer(null);
 
-    if (currentQuestionIndex < topic.questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
+    if (currentPromptIndex < topic.prompts.length - 1) {
+      setCurrentPromptIndex(currentPromptIndex + 1);
     } else {
       setQuizCompleted(true);
     }
@@ -55,10 +55,10 @@ export default function QuizModal({ topic, onClose, onSubmit }) {
 
   const handleSubmitQuiz = () => {
     // Final score calculation if the last question was answered
-    if (selectedAnswer === currentQuestion.correctAnswer) {
+    if (selectedAnswer === currentPrompt.correctAnswer) {
       setScore(score + 1);
     }
-    onSubmit(score, topic.questions.length);
+    onSubmit(score, topic.prompts.length);
     onClose();
   };
 
@@ -81,10 +81,10 @@ export default function QuizModal({ topic, onClose, onSubmit }) {
           <div className="space-y-4">
             <div className="bg-slate-800/40 p-4 rounded-lg">
               <div className="font-medium mb-2">
-                {currentQuestionIndex + 1}. {currentQuestion.question}
+                {currentPromptIndex + 1}. {currentPrompt.question}
               </div>
               <div className="grid gap-2">
-                {currentQuestion.options.map((option, index) => (
+                {currentPrompt.options.map((option, index) => (
                   <button
                     key={index}
                     onClick={() => handleAnswerSelect(index)}
@@ -112,14 +112,14 @@ export default function QuizModal({ topic, onClose, onSubmit }) {
                 disabled={selectedAnswer === null}
                 className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-50"
               >
-                {currentQuestionIndex < topic.questions.length - 1 ? "Next Question" : "Finish Quiz"}
+                {currentPromptIndex < topic.prompts.length - 1 ? "Next Prompt" : "Finish Quiz"}
               </button>
             </div>
           </div>
         ) : (
           <div className="text-center">
             <h3 className="text-2xl font-bold mb-4">Quiz Completed!</h3>
-            <p className="text-xl">Your score: {score} out of {topic.questions.length}</p>
+            <p className="text-xl">Your score: {score} out of {topic.prompts.length}</p>
             <button
               onClick={handleSubmitQuiz}
               className="mt-6 px-6 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-lg text-white text-lg"

@@ -94,12 +94,17 @@ def login():
 
     if not user or not bcrypt.checkpw(password.encode("utf-8"), user["password"]):
         return jsonify({"error": "Invalid credentials"}), 401
+    
+    payload = {
+        "username": user["username"],
+        "exp": datetime.utcnow() + timedelta(hours=24),
+    }
+
+    if user.get("role") == "admin":
+        payload["admin"] = True
 
     token = jwt.encode(
-        {
-            "username": user["username"],
-            "exp": datetime.utcnow() + timedelta(hours=24),
-        },
+        payload,
         app.config["SECRET_KEY"],
         algorithm="HS256"
     )
@@ -135,6 +140,7 @@ def save_quiz_attempt():
     except ValidationError as err:
         return jsonify(err.messages), 400
 
+  
     quiz_attempts_collection.insert_one(data)
 
     return jsonify({"message": "Quiz attempt saved successfully"}), 201
@@ -151,26 +157,7 @@ def user_progress():
     return jsonify(result), 200
 
 
-@app.route("/admin/login", methods=["POST"])
-def admin_login():
-    data = request.get_json()
-    username = data.get("username")
-    password = data.get("password")
 
-    # Replace with your actual admin credentials
-    if username == "admin" and password == "admin123":
-        token = jwt.encode(
-            {
-                "username": username,
-                "admin": True,
-                "exp": datetime.utcnow() + timedelta(hours=24),
-            },
-            app.config["SECRET_KEY"],
-            algorithm="HS256"
-        )
-        return jsonify({"token": token}), 200
-    else:
-        return jsonify({"error": "Invalid admin credentials"}), 401
 
 @app.route("/admin/users", methods=["GET"])
 def get_all_users():
@@ -205,6 +192,34 @@ def get_all_quiz_attempts():
     schema = QuizAttemptSchema(many=True)
     result = schema.dump(attempts)
     return jsonify(result), 200
+
+@app.route("/admin/users/<string:username>", methods=["DELETE"])
+def delete_user(username):
+    # Check for admin privileges from JWT token
+    token = request.headers.get("Authorization")
+    if not token:
+        return jsonify({"error": "Unauthorized"}), 401
+    try:
+        decoded = jwt.decode(token.split(" ")[1], app.config["SECRET_KEY"], algorithms=["HS256"])
+        if not decoded.get("admin"):
+            return jsonify({"error": "Unauthorized"}), 401
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+        return jsonify({"error": "Unauthorized"}), 401
+
+    # Prevent deleting the main admin user
+    if username == "admin":
+        return jsonify({"error": "Cannot delete the primary admin account"}), 403
+
+    # Find and delete the user
+    user_to_delete = users_collection.find_one({"username": username})
+    if not user_to_delete:
+        return jsonify({"error": "User not found"}), 404
+
+    # Delete the user and their quiz attempts
+    users_collection.delete_one({"username": username})
+    quiz_attempts_collection.delete_many({"username": username})
+
+    return jsonify({"message": f"User '{username}' and all their quiz attempts have been deleted"}), 200
 
 if __name__ == "__main__":
     app.run(debug=True)

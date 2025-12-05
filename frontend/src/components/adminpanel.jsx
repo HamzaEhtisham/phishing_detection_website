@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const AdminPanel = () => {
   const [users, setUsers] = useState([]);
@@ -11,9 +13,8 @@ const AdminPanel = () => {
 
   useEffect(() => {
     const fetchAdminData = async () => {
-      const token = localStorage.getItem("token"); // Use 'token' key
+      const token = localStorage.getItem("token");
       if (!token) {
-        // Should ideally not happen if AdminRoute is working, but good for robustness
         navigate("/login");
         return;
       }
@@ -37,7 +38,6 @@ const AdminPanel = () => {
       } catch (err) {
         console.error("Failed to fetch admin data", err);
         setError("Failed to load admin data. Please try again.");
-        // Optionally, log out or redirect if token is invalid
         if (err.response && err.response.status === 401) {
           localStorage.removeItem("token");
           localStorage.removeItem("user");
@@ -50,6 +50,48 @@ const AdminPanel = () => {
 
     fetchAdminData();
   }, [navigate]);
+
+  const handleDeleteUser = async (username) => {
+    const token = localStorage.getItem("token");
+    if (
+      !window.confirm(`Are you sure you want to delete user "${username}"?`)
+    ) {
+      return;
+    }
+
+    try {
+      await axios.delete(`http://127.0.0.1:5000/admin/users/${username}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setUsers(users.filter((user) => user.username !== username));
+      setQuizAttempts(
+        quizAttempts.filter((attempt) => attempt.username !== username)
+      );
+    } catch (err) {
+      console.error("Failed to delete user", err);
+      setError("Failed to delete user. Please try again.");
+    }
+  };
+
+  const generateReport = (user) => {
+    const doc = new jsPDF();
+    const userQuizAttempts = quizAttempts.filter(
+      (attempt) => attempt.username === user.username
+    );
+
+    doc.text(`Progress Report for ${user.username}`, 14, 16);
+    autoTable(doc, {
+      startY: 20,
+      head: [["Topic", "Score", "Date"]],
+      body: userQuizAttempts.map((attempt) => [
+        attempt.topic,
+        attempt.score,
+        new Date(attempt.date).toLocaleDateString(),
+      ]),
+    });
+
+    doc.save(`progress-report-${user.username}.pdf`);
+  };
 
   if (loading) {
     return (
@@ -97,41 +139,44 @@ const AdminPanel = () => {
                   <p className="text-slate-300">
                     Role: <span className="text-white">{user.role}</span>
                   </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section className="space-y-4">
-          <h3 className="text-2xl font-semibold text-emerald-400 border-b border-emerald-400 pb-2">
-            Quiz Attempts
-          </h3>
-          {quizAttempts.length === 0 ? (
-            <p className="text-slate-400">No quiz attempts found.</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {quizAttempts.map((attempt, index) => (
-                <div
-                  key={index}
-                  className="bg-slate-700/40 rounded-lg p-4 shadow-md"
-                >
-                  <p className="text-lg font-medium">
-                    Username:{" "}
-                    <span className="text-white">{attempt.username}</span>
-                  </p>
-                  <p className="text-slate-300">
-                    Topic: <span className="text-white">{attempt.topic}</span>
-                  </p>
-                  <p className="text-slate-300">
-                    Score: <span className="text-white">{attempt.score}</span>
-                  </p>
-                  <p className="text-slate-300">
-                    Date:{" "}
-                    <span className="text-white">
-                      {new Date(attempt.date).toLocaleDateString()}
-                    </span>
-                  </p>
+                  <div className="mt-4">
+                    <h4 className="text-lg font-semibold text-emerald-400">
+                      Quiz Attempts
+                    </h4>
+                    {quizAttempts.filter(
+                      (attempt) => attempt.username === user.username
+                    ).length === 0 ? (
+                      <p className="text-slate-400">
+                        No quiz attempts found for this user.
+                      </p>
+                    ) : (
+                      <ul className="list-disc list-inside">
+                        {quizAttempts
+                          .filter(
+                            (attempt) => attempt.username === user.username
+                          )
+                          .map((attempt, idx) => (
+                            <li key={idx} className="text-slate-300">
+                              {attempt.topic}: {attempt.score}
+                            </li>
+                          ))}
+                      </ul>
+                    )}
+                  </div>
+                  <div className="flex justify-end space-x-2 mt-4">
+                    <button
+                      onClick={() => handleDeleteUser(user.username)}
+                      className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded"
+                    >
+                      Remove
+                    </button>
+                    <button
+                      onClick={() => generateReport(user)}
+                      className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
+                    >
+                      Download Report
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

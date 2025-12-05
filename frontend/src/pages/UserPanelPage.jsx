@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import UserPanel from "../components/UserPanel";
 import { useNavigate } from "react-router-dom";
+import { topicsData } from "../data/topicsData";
 
 export default function UserPanelPage() {
   const [topics, setTopics] = useState([]);
@@ -9,35 +10,59 @@ export default function UserPanelPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchUserProgress = async () => {
+    const fetchProgressAndTopics = async () => {
       const token = localStorage.getItem("token");
       if (!token) {
-        navigate("/login"); // Redirect to login if no token
+        navigate("/login");
         return;
       }
 
       try {
-        const response = await fetch("http://127.0.0.1:5000/user_progress", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+        // Use the directly imported topicsData
+        const allAvailableTopics = topicsData;
+
+        // Fetch user progress
+        const progressResponse = await fetch(
+          "http://127.0.0.1:5000/user_progress",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!progressResponse.ok) {
+          if (progressResponse.status === 401) {
+            navigate("/login");
+          }
+          throw new Error(
+            `HTTP error! status: ${progressResponse.status} from /user_progress`
+          );
+        }
+        const userProgress = await progressResponse.json();
+
+        // Create a map for easy lookup of user attempts by topic title
+        const attemptedTopicsMap = new Map();
+        userProgress.forEach((attempt) => {
+          attemptedTopicsMap.set(attempt.topic, attempt);
         });
 
-        if (!response.ok) {
-          if (response.status === 401) {
-            navigate("/login"); // Token expired or invalid
-          }
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        // Merge all available topics with user's progress
+        const mergedTopics = allAvailableTopics.map((topic) => {
+          const userAttempt = attemptedTopicsMap.get(topic.title);
+          // Use topic.totalQuestions from the fetched allAvailableTopics
+          const totalQuestions = topic.totalQuestions || 10; // Fallback to 10 if not defined
 
-        const data = await response.json();
-        const transformedTopics = data.map(attempt => ({
-          id: attempt.topic, // Using topic as ID for now
-          title: attempt.topic,
-          attempted: true,
-          score: `${attempt.score}`, // Displaying score as is, as totalQuestions is not available
-        }));
-        setTopics(transformedTopics);
+          return {
+            id: topic.id,
+            title: topic.title,
+            attempted: !!userAttempt,
+            score: userAttempt ? `${userAttempt.score}/10` : `0/10`,
+            totalQuestions: totalQuestions,
+          };
+        });
+
+        setTopics(mergedTopics);
       } catch (e) {
         setError(e.message);
       } finally {
@@ -45,15 +70,23 @@ export default function UserPanelPage() {
       }
     };
 
-    fetchUserProgress();
+    fetchProgressAndTopics();
   }, [navigate]);
 
   if (loading) {
-    return <div className="min-h-screen bg-slate-900 text-slate-100 p-6 flex items-center justify-center">Loading user progress...</div>;
+    return (
+      <div className="min-h-screen bg-slate-900 text-slate-100 p-6 flex items-center justify-center">
+        Loading user progress...
+      </div>
+    );
   }
 
   if (error) {
-    return <div className="min-h-screen bg-slate-900 text-slate-100 p-6 flex items-center justify-center text-red-500">Error: {error}</div>;
+    return (
+      <div className="min-h-screen bg-slate-900 text-slate-100 p-6 flex items-center justify-center text-red-500">
+        Error: {error}
+      </div>
+    );
   }
 
   return (

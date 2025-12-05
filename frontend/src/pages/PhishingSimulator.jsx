@@ -9,10 +9,13 @@ import {
 } from "lucide-react";
 import QuizModal from "../components/quiz";
 import { topicsData } from "../data/topicsData";
-import { phishingQuizTopics, phishingAttackCategories } from "../data/phishingQuizdata";
-import * as pdfjsLib from 'pdfjs-dist';
+import {
+  phishingQuizTopics,
+  phishingAttackCategories,
+} from "../data/phishingQuizdata";
+import * as pdfjsLib from "pdfjs-dist";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = '/workers/pdf.worker.min.mjs';
+pdfjsLib.GlobalWorkerOptions.workerSrc = "/workers/pdf.worker.min.mjs";
 
 // ... (Chatbot component remains the same)
 
@@ -176,25 +179,28 @@ export default function PhishingSimulator() {
     if (subTopicId) {
       const mainTopic = topicsData.find((t) => t.id === parseInt(topicId));
       topic = mainTopic?.subtopics.find((st) => st.id === subTopicId);
-      
-      const category = phishingAttackCategories.find(c => c.title === mainTopic.title);
-      quizData = category?.subtopics.find(st => st.name === topic.title);
 
+      const category = phishingAttackCategories.find(
+        (c) => c.title === mainTopic.title
+      );
+      quizData = category?.subtopics.find((st) => st.name === topic.title);
     } else {
       topic = topicsData.find((t) => t.id === parseInt(topicId));
-      quizData = phishingQuizTopics.find(qt => qt.id === `topic_${topicId}`);
+      quizData = phishingQuizTopics.find((qt) => qt.id === `topic_${topicId}`);
     }
 
     if (topic) {
       setCurrentTopic(topic);
       if (quizData) {
-        setQuizTopics([{
-          id: quizData.id || topic.id,
-          title: quizData.title || topic.title,
-          questions: quizData.questions,
-          attempted: false,
-          score: null,
-        }]);
+        setQuizTopics([
+          {
+            id: quizData.id || topic.id,
+            title: quizData.title || topic.title,
+            prompts: quizData.prompts,
+            attempted: false,
+            score: null,
+          },
+        ]);
       } else {
         setQuizTopics([]);
       }
@@ -214,7 +220,8 @@ export default function PhishingSimulator() {
           const context = canvas.getContext("2d");
           canvas.height = viewport.height;
           canvas.width = viewport.width;
-          await page.render({ canvasContext: context, viewport: viewport }).promise;
+          await page.render({ canvasContext: context, viewport: viewport })
+            .promise;
           images.push(canvas.toDataURL());
         }
         setPageImages(images);
@@ -239,16 +246,48 @@ export default function PhishingSimulator() {
     setActiveQuizTopic(t);
   }
 
-  function handleQuizSubmit(score, outOf) {
-    setQuizTopics((prev) =>
-      prev.map((t) =>
-        t.id === activeQuizTopic.id
-          ? { ...t, attempted: true, score: `${score}/${outOf}` }
-          : t
-      )
-    );
-    setResult({ topic: activeQuizTopic.title, score: `${score}/${outOf}` });
-    setActiveQuizTopic(null);
+  async function handleQuizSubmit(score) {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.error("No token found, user is not authenticated.");
+      // Handle not authenticated state, maybe redirect to login
+      return;
+    }
+
+    try {
+      const response = await fetch("http://127.0.0.1:5000/save_quiz_attempt", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          topic: activeQuizTopic.title,
+          score: score,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save quiz attempt.");
+      }
+
+      const result = await response.json();
+      console.log("Quiz attempt saved:", result);
+
+      // Update local state after successful submission
+      setQuizTopics((prev) =>
+        prev.map((t) =>
+          t.id === activeQuizTopic.id
+            ? { ...t, attempted: true, score: `${score}/10` }
+            : t
+        )
+      );
+      setResult({ topic: activeQuizTopic.title, score: `${score}/10` });
+      setActiveQuizTopic(null);
+    } catch (error) {
+      console.error("Error saving quiz attempt:", error);
+      // Optionally, show an error message to the user
+    }
   }
 
   if (!currentTopic) {
@@ -265,11 +304,12 @@ export default function PhishingSimulator() {
         {/* MAIN PANEL */}
         <div className="flex flex-col gap-4">
           {/* Slides */}
-          <div className="bg-slate-800/40 rounded-2xl p-6 shadow-lg flex-col" style={{ display: 'flex', height: '100%' }}>
+          <div
+            className="bg-slate-800/40 rounded-2xl p-6 shadow-lg flex-col"
+            style={{ display: "flex", height: "100%" }}
+          >
             <div className="flex items-center justify-between mb-4">
-              <h1 className="text-2xl font-bold">
-                {currentTopic.title}
-              </h1>
+              <h1 className="text-2xl font-bold">{currentTopic.title}</h1>
             </div>
 
             {currentTopic.slidePath ? (
@@ -278,17 +318,30 @@ export default function PhishingSimulator() {
                   <div>Loading PDF...</div>
                 ) : (
                   <>
-                    {pageImages.length > 0 && <img src={pageImages[pageNumber - 1]} alt={`Page ${pageNumber}`} />}
+                    {pageImages.length > 0 && (
+                      <img
+                        src={pageImages[pageNumber - 1]}
+                        alt={`Page ${pageNumber}`}
+                      />
+                    )}
                     <div className="flex justify-center items-center mt-4">
-                        <button onClick={() => setPageNumber(pageNumber - 1)} disabled={pageNumber <= 1} className="p-2 rounded-md border border-slate-700 hover:bg-slate-800 disabled:opacity-50">
-                            <ChevronLeft size={18} />
-                        </button>
-                        <p className="mx-4">
-                            Page {pageNumber} of {pageImages.length}
-                        </p>
-                        <button onClick={() => setPageNumber(pageNumber + 1)} disabled={pageNumber >= pageImages.length} className="p-2 rounded-md border border-slate-700 hover:bg-slate-800 disabled:opacity-50">
-                            <ChevronRight size={18} />
-                        </button>
+                      <button
+                        onClick={() => setPageNumber(pageNumber - 1)}
+                        disabled={pageNumber <= 1}
+                        className="p-2 rounded-md border border-slate-700 hover:bg-slate-800 disabled:opacity-50"
+                      >
+                        <ChevronLeft size={18} />
+                      </button>
+                      <p className="mx-4">
+                        Page {pageNumber} of {pageImages.length}
+                      </p>
+                      <button
+                        onClick={() => setPageNumber(pageNumber + 1)}
+                        disabled={pageNumber >= pageImages.length}
+                        className="p-2 rounded-md border border-slate-700 hover:bg-slate-800 disabled:opacity-50"
+                      >
+                        <ChevronRight size={18} />
+                      </button>
                     </div>
                   </>
                 )}
@@ -317,10 +370,12 @@ export default function PhishingSimulator() {
                 <div>
                   <div className="font-medium">{quizTopics[0].title}</div>
                   <div className="text-sm text-slate-400 mt-1">
-                    Questions: {quizTopics[0].questions.length}
+                    Prompts: {quizTopics[0].prompts.length}
                   </div>
                   <div className="text-sm text-emerald-400 mt-2">
-                    {quizTopics[0].attempted ? `Score: ${quizTopics[0].score}` : "Not attempted"}
+                    {quizTopics[0].attempted
+                      ? `Score: ${quizTopics[0].score}`
+                      : "Not attempted"}
                   </div>
                 </div>
                 <div className="mt-3 flex items-center justify-between">
@@ -331,14 +386,14 @@ export default function PhishingSimulator() {
                     Attempt
                   </button>
                   {quizTopics[0].attempted && (
-                    <span className="text-sm text-slate-400">
-                      Attempted ✓
-                    </span>
+                    <span className="text-sm text-slate-400">Attempted ✓</span>
                   )}
                 </div>
               </div>
             ) : (
-              <div className="text-slate-400">No quiz available for this topic.</div>
+              <div className="text-slate-400">
+                No quiz available for this topic.
+              </div>
             )}
 
             {result && (

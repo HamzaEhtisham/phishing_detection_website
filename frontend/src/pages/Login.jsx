@@ -9,16 +9,8 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      let url = "";
-      let body = {};
-
-      if (login === "admin") {
-        url = "http://127.0.0.1:5000/admin/login";
-        body = { username: login, password };
-      } else {
-        url = "http://127.0.0.1:5000/login";
-        body = { login, password };
-      }
+      const url = "http://127.0.0.1:5000/login";
+      const body = { login, password };
 
       const response = await fetch(url, {
         method: "POST",
@@ -30,16 +22,11 @@ export default function Login() {
       const data = await response.json();
       if (response.ok) {
         localStorage.setItem("token", data.token);
-        if (login === "admin") {
-          localStorage.setItem("user", JSON.stringify({ username: "admin", role: "admin" })); // Store basic admin info
+        localStorage.setItem("user", JSON.stringify(data.user));
+        if (data.user.role === "admin") {
           navigate("/admin-panel");
         } else {
-          localStorage.setItem("user", JSON.stringify(data.user));
-          if (data.user.role === "admin") {
-            navigate("/admin-panel");
-          } else {
-            navigate("/");
-          }
+          navigate("/");
         }
       } else {
         alert(data.message || data.error);
